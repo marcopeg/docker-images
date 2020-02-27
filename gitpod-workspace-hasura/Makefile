@@ -1,5 +1,5 @@
 tag?=marcopeg/gitpod-workspace-hasura
-version?=0.0.1
+version?=1.1.0
 
 build:
 	docker build -t ${tag}:${version} .
