@@ -1,26 +1,62 @@
-FROM gitpod/workspace-full:latest
+FROM gitpod/workspace-postgres
+
 
 ###
-# Install PostgreSQL
-RUN sudo apt-get update \
- && sudo apt-get install -y postgresql postgresql-contrib \
- && sudo apt-get clean \
- && sudo rm -rf /var/cache/apt/* /var/lib/apt/lists/* /tmp/*
+### APACHE SETUP
+###
 
-# Setup PostgreSQL server for user gitpod
-ENV PATH="$PATH:/usr/lib/postgresql/11/bin"
-ENV PGDATA="/workspace/.pg_ctl/data"
-RUN mkdir -p ~/.pg_ctl/bin ~/.pg_ctl/data ~/.pg_ctl/sockets \
- && initdb -D ~/.pg_ctl/data/ \
- && printf "#!/bin/bash\n[[ ! -d /workspace/.pg_ctl ]] && cp -R ~/.pg_ctl /workspace\npg_ctl -D /workspace/.pg_ctl/data/ -l /workspace/.pg_ctl/log -o \"-k /workspace/.pg_ctl/sockets\" start\n" > ~/.pg_ctl/bin/pg_start \
- && printf "#!/bin/bash\npg_ctl -D /workspace/.pg_ctl/data/ -l /workspace/.pg_ctl/log -o \"-k /workspace/.pg_ctl/sockets\" stop\n" > ~/.pg_ctl/bin/pg_stop \
- && chmod +x ~/.pg_ctl/bin/*
-ENV PATH="$PATH:$HOME/.pg_ctl/bin"
-ENV DATABASE_URL="postgresql://gitpod@localhost"
-ENV PGHOSTADDR="127.0.0.1"
-ENV PGDATABASE="postgres"
+# Hack Apache's Config
+RUN sudo sed -i 's/ServerRoot ${GITPOD_REPO_ROOT}/ServerRoot \/home\/gitpod\/.apache/g' /etc/apache2/apache2.conf
+RUN sudo sed -i 's/${GITPOD_REPO_ROOT}\/${APACHE_DOCROOT_IN_REPO}/\/home\/gitpod\/.apache\/public/g' /etc/apache2/apache2.conf
+RUN sudo sed -i 's/8001/8008/g' /etc/apache2/apache2.conf
 
-# This is a bit of a hack. At the moment we have no means of starting background
-# tasks from a Dockerfile. This workaround checks, on each bashrc eval, if the
-# PostgreSQL server is running, and if not starts it.
-RUN printf "\n# Auto-start PostgreSQL server.\n[[ \$(pg_ctl status | grep PID) ]] || pg_start > /dev/null\n" >> ~/.bashrc
+
+
+###
+### ADMINER SETUP
+###
+
+# Download Adminer
+RUN sudo mkdir -p ~/.apache/public/plugins
+RUN sudo wget -O ~/.apache/public/adminer-4.7.6-en.php https://github.com/vrana/adminer/releases/download/v4.7.6/adminer-4.7.6-en.php
+RUN sudo wget -O ~/.apache/public/plugins/plugin.php https://raw.githubusercontent.com/vrana/adminer/master/plugins/plugin.php
+
+# Create the runner file with plugins
+# (this is intended to be open to extensions by adding plugins)
+RUN sudo bash -c "echo $'<?php\n\
+\n\
+function adminer_object() { \n\
+  include_once \"./plugins/plugin.php\"; \n\
+\n\
+  foreach (glob(\"plugins/*.php\") as \$filename) { \n\
+      include_once \"./\$filename\"; \n\
+  } \n\
+\n\
+  \$plugins = array( \n\
+  ); \n\
+\n\
+  return new AdminerPlugin(\$plugins); \n\
+} \n\
+\n\
+include \"./adminer-4.7.6-en.php\";' > ~/.apache/public/index.php"
+
+# Give proper execution rights to the PHP files
+RUN sudo chmod -R u+rwX,go+rX,go-w ~/.apache/public
+
+
+
+###
+### WORKSPACE SETUP
+###
+
+# Creates the `apache_start` command:
+ENV PATH="$PATH:$HOME/.apache-bin"
+RUN mkdir -p ~/.apache-bin \
+  && printf "#!/bin/bash\napachectl start" > ~/.apache-bin/apache_start \
+  && printf "#!/bin/bash\napachectl stop" > ~/.apache-bin/apache_stop \
+  && printf "#!/bin/bash\napachectl restart" > ~/.apache-bin/apache_restart \
+  && chmod +x ~/.apache-bin/*
+
+# Autostart Apache
+# (hack inspired by the postgres image)
+RUN printf "\n# Auto-start Apache2 server.\napache_start > /dev/null\n" >> ~/.bashrc
