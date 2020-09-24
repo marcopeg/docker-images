@@ -1,4 +1,4 @@
-FROM hasura/graphql-engine:v1.3.0 as hasura
+FROM hasura/graphql-engine:v1.3.2 as hasura
 FROM gitpod/workspace-postgres
 
 
