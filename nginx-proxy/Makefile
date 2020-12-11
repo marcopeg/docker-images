@@ -2,7 +2,7 @@ all: run
 
 name ?= nginx-proxy
 registry ?= marcopeg
-version ?= 0.0.1
+version ?= 0.0.2
 
 image:
 	$(call blue, "Building docker image...")
