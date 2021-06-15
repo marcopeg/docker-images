@@ -17,9 +17,9 @@ RUN sudo sed -i 's/8001/8008/g' /etc/apache2/apache2.conf
 ###
 
 # Download Adminer
-RUN sudo mkdir -p ~/.apache/public/plugins
-RUN sudo wget -O ~/.apache/public/adminer-4.7.6-en.php https://github.com/vrana/adminer/releases/download/v4.7.6/adminer-4.7.6-en.php
-RUN sudo wget -O ~/.apache/public/plugins/plugin.php https://raw.githubusercontent.com/vrana/adminer/master/plugins/plugin.php
+RUN sudo mkdir -p /home/gitpod/.apache/public/plugins
+RUN sudo wget -O /home/gitpod/.apache/public/adminer-4.7.6-en.php https://github.com/vrana/adminer/releases/download/v4.7.6/adminer-4.7.6-en.php
+RUN sudo wget -O /home/gitpod/.apache/public/plugins/plugin.php https://raw.githubusercontent.com/vrana/adminer/master/plugins/plugin.php
 
 # Create the runner file with plugins
 # (this is intended to be open to extensions by adding plugins)
@@ -38,10 +38,10 @@ function adminer_object() { \n\
   return new AdminerPlugin(\$plugins); \n\
 } \n\
 \n\
-include \"./adminer-4.7.6-en.php\";' > ~/.apache/public/index.php"
+include \"./adminer-4.7.6-en.php\";' > /home/gitpod/.apache/public/index.php"
 
 # Give proper execution rights to the PHP files
-RUN sudo chmod -R u+rwX,go+rX,go-w ~/.apache/public
+RUN sudo chmod -R u+rwX,go+rX,go-w /home/gitpod/.apache/public
 
 
 
@@ -51,12 +51,12 @@ RUN sudo chmod -R u+rwX,go+rX,go-w ~/.apache/public
 
 # Creates the `apache_start` command:
 ENV PATH="$PATH:$HOME/.apache-bin"
-RUN mkdir -p ~/.apache-bin \
-  && printf "#!/bin/bash\napachectl start" > ~/.apache-bin/apache_start \
-  && printf "#!/bin/bash\napachectl stop" > ~/.apache-bin/apache_stop \
-  && printf "#!/bin/bash\napachectl restart" > ~/.apache-bin/apache_restart \
-  && chmod +x ~/.apache-bin/*
+RUN mkdir -p /home/gitpod/.apache-bin \
+  && printf "#!/bin/bash\napachectl start" > /home/gitpod/.apache-bin/apache_start \
+  && printf "#!/bin/bash\napachectl stop" > /home/gitpod/.apache-bin/apache_stop \
+  && printf "#!/bin/bash\napachectl restart" > /home/gitpod/.apache-bin/apache_restart \
+  && chmod +x /home/gitpod/.apache-bin/*
 
 # Autostart Apache
 # (hack inspired by the postgres image)
-RUN printf "\n# Auto-start Apache2 server.\napache_start > /dev/null\n" >> ~/.bashrc
+RUN printf "\n# Auto-start Apache2 server.\napache_start > /dev/null\n" >> /home/gitpod/.bashrc

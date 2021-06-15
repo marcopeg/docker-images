@@ -5,11 +5,12 @@ Extends [workspace-postgres](https://github.com/gitpod-io/workspace-images/tree/
 Edit your `.gitpod.yml` file as follow:
 
 ```yml
-image: marcopeg/gitpod-workspace-postgres:2.5.0
+image: marcopeg/gitpod-workspace-postgres:2.6.0
 
 ports:
   - port: 8008
-    onOpen: ignore
+    onOpen: open-preview
+    visibility: private
   - port: 5432
     onOpen: ignore
 ```
@@ -24,7 +25,15 @@ plugins are pre-configured.
 
 ## How to login?
 
-In order to login to the database select "postgres" and use:
+First, get the url to your Adminer interface:
+
+```bash
+gp url 8008
+```
+
+![Get the Url](./docs/get-url.png)
+
+Then, fill up the login screen with the following values:
 
 | property |  value            |
 | -------- | ----------------- |
@@ -36,3 +45,5 @@ In order to login to the database select "postgres" and use:
 
 👉 Choose the **permanent login** option so next
 time you run the workspace, you'll be able to login with just one click.
+
+![Adminer Login](./docs/login.png)

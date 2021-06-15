@@ -1,5 +1,5 @@
 tag?=marcopeg/gitpod-workspace-postgres
-version?=2.5.0
+version?=2.6.0
 
 test:
 	docker build -t ${tag}:${version} --no-cache .
