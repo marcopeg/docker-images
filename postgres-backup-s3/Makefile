@@ -3,7 +3,7 @@ all: run
 # marcopeg/postgres-backup-s3:0.0.1
 name ?= postgres-backup-s3
 registry ?= marcopeg
-version ?= 0.0.1-beta9
+version ?= 0.0.2
 
 build:
 	$(call blue, "Building docker image (with cache)...")
