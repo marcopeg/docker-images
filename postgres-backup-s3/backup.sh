@@ -57,26 +57,32 @@ export AWS_DEFAULT_REGION=$S3_REGION
 export PGPASSWORD=$POSTGRES_PASSWORD
 POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER $POSTGRES_EXTRA_OPTS"
 
+# Cleanup existing backups
+rm -rf /backups
+mkdir -p /backups
+
 # Backup name
-FILE_NAME="${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H-%M-%SZ")"
+FILE_NAME="/backups/${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H-%M-%SZ")"
 
 echo "Creating dump of ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
 pg_dump $POSTGRES_HOST_OPTS $POSTGRES_DATABASE > ${FILE_NAME}.sql
 
 # Compression with optional password
 if [ "${S3_PASSWORD}" = "**None**" ]; then
-  echo "Compressing archive..."
-  zip -q /${FILE_NAME}.sql.zip /${FILE_NAME}.sql
+  echo "Compressing archive (without password)..."
+  zip -q ${FILE_NAME}.sql.zip ${FILE_NAME}.sql
 else
   echo "Compressing archive with password..."
-  zip -q -P ${S3_PASSWORD} /${FILE_NAME}.sql.zip /${FILE_NAME}.sql
+  zip -q -P ${S3_PASSWORD} ${FILE_NAME}.sql.zip ${FILE_NAME}.sql
 fi
 
+# TODO: would be nice to add a more sophisticate error management strategy...
 echo "Uploading dump to $S3_BUCKET..."
-cat ${FILE_NAME}.sql.zip | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H-%M-%SZ").sql.zip || exit 2
+cat ${FILE_NAME}.sql.zip | aws $AWS_ARGS s3 cp - s3://$S3_BUCKET/$S3_PREFIX/${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H-%M-%SZ").sql.zip || echo "ERROR: Failed to upload to S3!!!" >/dev/stderr
 
 echo "Cleaning up..."
 rm -f ${FILE_NAME}.sql
 rm -f ${FILE_NAME}.zip.sql
+rm -rf /backups
 
-echo "SQL backup uploaded successfully :-)"
+echo "Backup completed."

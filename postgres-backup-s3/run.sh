@@ -8,6 +8,12 @@ fi
 
 if [ "${SCHEDULE}" = "**None**" ]; then
   sh backup.sh
+
+  # Useful to keep alive the process in CapRover
+  if [ "${KEEP_ALIVE}" = "**Yes**" ]; then
+  echo "Keep instance alive for a hundred years..."
+    sleep 3153600000;
+  fi
 else
   exec go-cron "$SCHEDULE" /bin/sh backup.sh
 fi
