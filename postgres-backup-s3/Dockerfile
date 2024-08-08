@@ -1,18 +1,18 @@
-FROM alpine:3.13.4
+FROM postgres:16-alpine
 LABEL maintainer="Marco Pegoraro <marco.pegoraro@gmail.com>"
 
-# Install dependencies
-# https://pkgs.alpinelinux.org/packages?name=postgresql&branch=&repo=main&arch=x86_64&maintainer=
-RUN apk update
-RUN apk add postgresql
-RUN apk add python3 py3-pip curl zip
-RUN pip install awscli
-RUN curl -L --insecure https://github.com/odise/go-cron/releases/download/v0.0.7/go-cron-linux.gz | zcat > /usr/local/bin/go-cron
-RUN chmod u+x /usr/local/bin/go-cron
+# Install required tools and awscli
+RUN apk update && \
+    apk add --no-cache wget ca-certificates python3 py3-pip curl zip aws-cli && \
+    update-ca-certificates
 
-# Clenup image
-RUN apk del curl
-RUN rm -rf /var/cache/apk/*
+# Download and install go-cron
+RUN curl -L --insecure https://github.com/odise/go-cron/releases/download/v0.0.7/go-cron-linux.gz | zcat > /usr/local/bin/go-cron && \
+    chmod u+x /usr/local/bin/go-cron
+
+# Cleanup image
+RUN apk del curl && \
+    rm -rf /var/cache/apk/*
 
 # Define running environment
 ENV POSTGRES_DATABASE **None**

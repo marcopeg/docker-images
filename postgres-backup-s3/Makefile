@@ -3,17 +3,17 @@ all: run
 # marcopeg/postgres-backup-s3:0.0.1
 name ?= postgres-backup-s3
 registry ?= marcopeg
-version ?= 0.0.2
+version ?= 0.0.4
 
 build:
 	$(call blue, "Building docker image (with cache)...")
-	docker build -t ${name}:${version} -f Dockerfile .
+	docker buildx build --platform linux/amd64 -t ${name}:${version} -f Dockerfile .
 	docker tag ${name}:${version} ${name}:latest
 	$(MAKE) clean
 
 image:
 	$(call blue, "Building docker image...")
-	docker build --no-cache -t ${name}:${version} -f Dockerfile .
+	docker buildx build --platform linux/amd64 --no-cache -t ${name}:${version} -f Dockerfile .
 	docker tag ${name}:${version} ${name}:latest
 	$(MAKE) clean
 
